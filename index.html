@@ -3,113 +3,303 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Каталог модификаций</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Мод-Портал (Filtered Modrinth)</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #121212;
-      color: #ffffff;
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --accent: #1bd96a;
+      --accent-hover: #17b858;
+      --text: #e0e0e0;
+      --text-muted: #a0a0a0;
+      --border: #2e2e2e;
+    }
+
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text);
+      line-height: 1.6;
       padding: 20px;
     }
-    h1 {
-      color: #4caf50;
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
     }
-    .status {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 20px;
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
     }
-    .card {
-      background: #1e1e1e;
-      border: 1px solid #333;
+
+    header h1 {
+      font-size: 2.2rem;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 15px;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+
+    button {
+      padding: 12px 24px;
+      background-color: var(--accent);
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .stats-bar {
       margin-bottom: 15px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
     }
-    .card h3 {
-      margin-top: 0;
-      color: #64b5f6;
+
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
     }
-    .card p {
+
+    .mod-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+
+    .mod-card:hover {
+      border-color: #3e3e3e;
+      transform: translateY(-2px);
+    }
+
+    .mod-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #2a2a2a;
+      flex-shrink: 0;
+    }
+
+    .mod-content {
+      flex: 1;
+    }
+
+    .mod-title {
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+    }
+
+    .mod-title a {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .mod-title a:hover {
+      color: var(--accent);
+    }
+
+    .mod-description {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .mod-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      background: #2a2a2a;
       color: #ccc;
-      margin-bottom: 0;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
     }
-    .error {
-      color: #ff5252;
+
+    .mod-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 8px;
     }
-    .empty {
-      color: #aaa;
-      font-style: italic;
+
+    .loader, .empty-msg {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
     }
   </style>
 </head>
 <body>
 
-  <h1>Платформа модификаций</h1>
-  <div class="status">● Подключено к Supab</div>
-  <hr style="border-color: #333;">
+  <div class="container">
+    <header>
+      <h1>Каталог Модов</h1>
+      <p>Поиск по Modrinth API с активным фильтром контента</p>
+    </header>
 
-  <h2>Список доступных модов:</h2>
-  <div id="mods-container">Загрузка данных...</div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Введите название мода..." value="optimization">
+      <button id="searchBtn">Искать</button>
+    </div>
+
+    <div class="stats-bar" id="statsBar">Загрузка...</div>
+
+    <div class="grid" id="modsGrid"></div>
+  </div>
 
   <script>
-    // Настройки Supabase
-    const SUPABASE_URL = 'https://hdwzrycohldvxjesakrf.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_MQGUsNu7H_4dzARZo5Gu2g_MKc2QSmi';
+    // Список слов для исключения (в нижнем регистре)
+    const BANNED_KEYWORDS = [
+      'pride', 
+      'lgbt', 
+      'lgbtq', 
+      'gay', 
+      'lesbian', 
+      'transgender', 
+      'queer', 
+      'nonbinary', 
+      'rainbow_flag',
+      'rainbow flag'
+    ];
 
-    // Инициализация клиента Supabase (переменная переименована в supabaseClient)
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const modsGrid = document.getElementById('modsGrid');
+    const statsBar = document.getElementById('statsBar');
 
-    // Функция получения списка модов
-    async function loadMods() {
-      const container = document.getElementById('mods-container');
+    // Проверка проекта на запрещенные слова
+    function isAllowedProject(project) {
+      const textToSearch = [
+        project.title || '',
+        project.description || '',
+        project.slug || '',
+        ...(project.categories || [])
+      ].join(' ').toLowerCase();
+
+      return !BANNED_KEYWORDS.some(keyword => textToSearch.includes(keyword));
+    }
+
+    // Выполнение запроса к Modrinth API
+    async function fetchMods() {
+      const query = searchInput.value.trim();
+      modsGrid.innerHTML = '<div class="loader">Загрузка результатов...</div>';
+      statsBar.textContent = 'Запрос к API...';
 
       try {
-        const { data: mods, error } = await supabaseClient
-          .from('mods')
-          .select('*');
+        const url = `https://api.modrinth.com/v2/search?query=${encodeURIComponent(query)}&limit=40`;
+        const response = await fetch(url);
 
-        if (error) {
-          container.className = 'error';
-          container.innerHTML = 'Ошибка при загрузке модов: ' + error.message;
-          return;
+        if (!response.ok) {
+          throw new Error('Ошибка при получении данных от API Modrinth');
         }
 
-        if (!mods || mods.length === 0) {
-          container.className = 'empty';
-          container.innerHTML = 'Моды не найдены или список пуст.';
-          return;
-        }
+        const data = await response.json();
+        const rawHits = data.hits || [];
 
-        container.className = '';
-        container.innerHTML = mods.map(mod => `
-          <div class="card">
-            <h3>${escapeHtml(mod.title)}</h3>
-            <p>${escapeHtml(mod.description || 'Без описания')}</p>
-          </div>
-        `).join('');
+        // Фильтрация модов
+        const filteredHits = rawHits.filter(isAllowedProject);
 
+        renderMods(filteredHits, rawHits.length);
       } catch (err) {
-        container.className = 'error';
-        container.innerHTML = 'Произошла непредвиденная ошибка: ' + err.message;
+        modsGrid.innerHTML = `<div class="empty-msg" style="color:#ff6b6b">Произошла ошибка: ${err.message}</div>`;
+        statsBar.textContent = '';
       }
     }
 
-    // Вспомогательная функция для безопасности вывода текста
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    // Отображение карточек модов
+    function renderMods(mods, originalCount) {
+      statsBar.textContent = `Показано модов: ${mods.length} (Отфильтровано: ${originalCount - mods.length})`;
+
+      if (mods.length === 0) {
+        modsGrid.innerHTML = '<div class="empty-msg">Моды не найдены или были скрыты фильтром.</div>';
+        return;
+      }
+
+      modsGrid.innerHTML = mods.map(mod => {
+        const iconUrl = mod.icon_url || 'https://raw.githubusercontent.com/modrinth/knights-canvas/main/assets/modrinth.png';
+        const pageUrl = `https://modrinth.com/${mod.project_type}/${mod.slug}`;
+        const downloads = Number(mod.downloads).toLocaleString('ru-RU');
+        
+        const tags = (mod.categories || []).slice(0, 5).map(cat => `<span class="tag">${cat}</span>`).join('');
+
+        return `
+          <div class="mod-card">
+            <img class="mod-icon" src="${iconUrl}" alt="${mod.title}" onerror="this.src='https://placehold.co/64x64/2a2a2a/a0a0a0?text=MOD'">
+            <div class="mod-content">
+              <h2 class="mod-title">
+                <a href="${pageUrl}" target="_blank" rel="noopener noreferrer">${mod.title}</a>
+              </h2>
+              <p class="mod-description">${mod.description || 'Описание отсутствует'}</p>
+              <div class="mod-tags">${tags}</div>
+              <div class="mod-meta">
+                <span>Автор: <b>${mod.author}</b></span> • 
+                <span>Скачиваний: <b>${downloads}</b></span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
-    // Запускаем выгрузку модов при загрузке страницы
-    loadMods();
-  </script>
+    // Обработчики событий
+    searchBtn.addEventListener('click', fetchMods);
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') fetchMods();
+    });
 
+    // Автоматическая загрузка при старте
+    fetchMods();
+  </script>
 </body>
 </html>
