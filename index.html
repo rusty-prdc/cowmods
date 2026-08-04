@@ -59,15 +59,15 @@
     const SUPABASE_URL = 'https://hdwzrycohldvxjesakrf.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_MQGUsNu7H_4dzARZo5Gu2g_MKc2QSmi';
 
-    // Инициализация клиента Supabase
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Инициализация клиента Supabase (переменная переименована в supabaseClient)
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // Функция получения списка модов
     async function loadMods() {
       const container = document.getElementById('mods-container');
 
       try {
-        const { data: mods, error } = await supabase
+        const { data: mods, error } = await supabaseClient
           .from('mods')
           .select('*');
 
