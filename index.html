@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Каталог модификаций</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #4caf50;
+    }
+    .status {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .card h3 {
+      margin-top: 0;
+      color: #64b5f6;
+    }
+    .card p {
+      color: #ccc;
+      margin-bottom: 0;
+    }
+    .error {
+      color: #ff5252;
+    }
+    .empty {
+      color: #aaa;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Платформа модификаций</h1>
+  <div class="status">● Подключено к Supabase (Авто-модерация активна)</div>
+  <hr style="border-color: #333;">
+
+  <h2>Список доступных модов:</h2>
+  <div id="mods-container">Загрузка данных...</div>
+
+  <script>
+    // Настройки Supabase
+    const SUPABASE_URL = 'https://hdwzrycohldvxjesakrf.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_MQGUsNu7H_4dzARZo5Gu2g_MKc2QSmi';
+
+    // Инициализация клиента Supabase
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Функция получения списка модов
+    async function loadMods() {
+      const container = document.getElementById('mods-container');
+
+      try {
+        const { data: mods, error } = await supabase
+          .from('mods')
+          .select('*');
+
+        if (error) {
+          container.className = 'error';
+          container.innerHTML = 'Ошибка при загрузке модов: ' + error.message;
+          return;
+        }
+
+        if (!mods || mods.length === 0) {
+          container.className = 'empty';
+          container.innerHTML = 'Моды не найдены или список пуст.';
+          return;
+        }
+
+        container.className = '';
+        container.innerHTML = mods.map(mod => `
+          <div class="card">
+            <h3>${escapeHtml(mod.title)}</h3>
+            <p>${escapeHtml(mod.description || 'Без описания')}</p>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        container.className = 'error';
+        container.innerHTML = 'Произошла непредвиденная ошибка: ' + err.message;
+      }
+    }
+
+    // Вспомогательная функция для безопасности вывода текста
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Запускаем выгрузку модов при загрузке страницы
+    loadMods();
+  </script>
+
+</body>
+</html>
