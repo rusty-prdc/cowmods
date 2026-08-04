@@ -1,0 +1,28 @@
+name: Moderation Check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  scan-content:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Скачивание кода
+        uses: actions/checkout@v4
+
+      - name: Проверка на запрещенные ключевые слова
+        run: |
+          echo "Запуск проверки на запрещенный контент..."
+          # Ищем ключевые слова во всех файлах проекта (игнорируя сервисную папку .git)
+          FOUND=$(grep -rnwi --exclude-dir={.git,.github} -E "lgbt|queer" . || true)
+          
+          if [ -n "$FOUND" ]; then
+            echo "::error::ОБНАРУЖЕН ЗАПРЕЩЕННЫЙ КОНТЕНТ:"
+            echo "$FOUND"
+            exit 1
+          else
+            echo "Проверка успешно пройдена! Запрещенных слов не найдено."
+          fi
